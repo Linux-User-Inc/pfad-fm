@@ -2,6 +2,7 @@ use crate::error::{PfadError, Result};
 use std::fs;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 const FILE_NAME: &str = "selection";
 
@@ -32,7 +33,10 @@ pub(crate) fn save(dir: &Path, paths: &[PathBuf]) -> Result<()> {
 
     fs::create_dir_all(dir)?;
 
-    let tmp = dir.join(format!("{FILE_NAME}.{}.tmp", std::process::id()));
+    // pid separates processes, the counter separates threads within one process
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let tmp = dir.join(format!("{FILE_NAME}.{}.{n}.tmp", std::process::id()));
     fs::write(&tmp, data)?;
     fs::rename(&tmp, dir.join(FILE_NAME))?; // atomic replace
     Ok(())
