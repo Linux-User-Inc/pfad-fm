@@ -115,7 +115,7 @@ fn copy_non_utf8_path_is_rejected_and_old_selection_kept() {
 
     assert!(matches!(err, PfadError::NonUtf8Path(_)));
     // The previous selection is still pasteable.
-    paste_files(dest.path()).unwrap();
+    paste_files(dest.path(), false).unwrap();
     assert!(dest.path().join("good.txt").exists());
 }
 
@@ -139,7 +139,7 @@ fn copy_non_utf8_path_is_rejected_and_old_selection_kept() {
 
     assert!(matches!(err, PfadError::NonUtf8Path(_)));
     // The previous selection is still pasteable.
-    paste_files(dest.path()).unwrap();
+    paste_files(dest.path(), false).unwrap();
     assert!(dest.path().join("good.txt").exists());
 }
 

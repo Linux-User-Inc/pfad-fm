@@ -24,7 +24,6 @@ pub(crate) fn set(paths: &[PathBuf]) -> Result<()> {
 }
 
 /// Reads the files currently on the system clipboard.
-#[allow(dead_code)]
 pub(crate) fn get() -> Result<Vec<PathBuf>> {
     let files = context()?
         .get_files()

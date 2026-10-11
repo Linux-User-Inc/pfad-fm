@@ -24,17 +24,23 @@ pub fn copy_files(paths: Vec<impl AsRef<Path>>, to_clipboard: bool) -> Result<()
     Ok(())
 }
 
-/// Copies the saved selection into `dest_dir` and returns the new paths.
+/// Copies the saved selection into `dest_dir` and returns the new paths. With
+/// `from_clipboard` the files currently on the system clipboard are used instead,
+/// and the saved selection is left alone.
 ///
 /// Fails with [`PfadError::NothingToPaste`] if nothing was copied, and with an
 /// I/O error if a copied item no longer exists; that check runs for every item
 /// before anything is copied. Items are then copied in order and nothing is ever
 /// overwritten, so a later failure (for example a name collision) can still
 /// leave the earlier items copied.
-pub fn paste_files(dest_dir: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
+pub fn paste_files(dest_dir: impl AsRef<Path>, from_clipboard: bool) -> Result<Vec<PathBuf>> {
     let dest_dir = std::path::absolute(dest_dir)?;
 
-    let sources = file::load(&file::default_dir()?)?;
+    let sources = if from_clipboard {
+        clipboard::get()?
+    } else {
+        file::load(&file::default_dir()?)?
+    };
     if sources.is_empty() {
         return Err(PfadError::NothingToPaste);
     }

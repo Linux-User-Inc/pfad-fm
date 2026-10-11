@@ -41,8 +41,8 @@ pub fn run(args: Args) -> Result<()> {
         Commands::Copy { paths, clipboard } => {
             pfad_core::copy_files(paths, clipboard)?;
         }
-        Commands::Paste { dir_path } => {
-            pfad_core::paste_files(dir_path)?;
+        Commands::Paste { dir_path, clipboard } => {
+            pfad_core::paste_files(dir_path, clipboard)?;
         }
         _ => {
             return Err(PfadError::Cli("Invalid command".to_string()));

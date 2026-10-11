@@ -16,7 +16,7 @@ fn paste_single_file() {
     fs::write(&file, "one").unwrap();
 
     copy_files(vec![&file], false).unwrap();
-    let created = paste_files(dest.path()).unwrap();
+    let created = paste_files(dest.path(), false).unwrap();
 
     assert_eq!(created, vec![std::path::absolute(dest.path()).unwrap().join("a.txt")]);
     assert_eq!(fs::read_to_string(dest.path().join("a.txt")).unwrap(), "one");
@@ -36,7 +36,7 @@ fn paste_directory_recursively() {
     fs::write(sub.join("nested").join("deep").join("low.txt"), "low").unwrap();
 
     copy_files(vec![&sub], false).unwrap();
-    paste_files(dest.path()).unwrap();
+    paste_files(dest.path(), false).unwrap();
 
     let out = dest.path().join("sub");
     assert_eq!(fs::read_to_string(out.join("top.txt")).unwrap(), "top");
@@ -57,7 +57,7 @@ fn paste_empty_directory() {
     fs::create_dir(&empty).unwrap();
 
     copy_files(vec![&empty], false).unwrap();
-    paste_files(dest.path()).unwrap();
+    paste_files(dest.path(), false).unwrap();
 
     assert!(dest.path().join("empty").is_dir());
 }
@@ -76,7 +76,7 @@ fn paste_mixed_files_and_dirs() {
     fs::write(sub.join("inner.txt"), "inner").unwrap();
 
     copy_files(vec![a, b, sub], false).unwrap();
-    let created = paste_files(dest.path()).unwrap();
+    let created = paste_files(dest.path(), false).unwrap();
 
     assert_eq!(created.len(), 3);
     assert_eq!(fs::read_to_string(dest.path().join("a.txt")).unwrap(), "a");
@@ -97,7 +97,7 @@ fn paste_existing_file_is_an_error_and_not_overwritten() {
     fs::write(dest.path().join("a.txt"), "old").unwrap();
 
     copy_files(vec![&file], false).unwrap();
-    let err = paste_files(dest.path()).unwrap_err();
+    let err = paste_files(dest.path(), false).unwrap_err();
 
     assert!(matches!(err, PfadError::AlreadyExists(_)));
     assert_eq!(fs::read_to_string(dest.path().join("a.txt")).unwrap(), "old");
@@ -115,7 +115,7 @@ fn paste_stops_at_first_collision_but_keeps_earlier_copies() {
     fs::write(dest.path().join("b.txt"), "old").unwrap();
 
     copy_files(vec![&a, &b], false).unwrap();
-    let err = paste_files(dest.path()).unwrap_err();
+    let err = paste_files(dest.path(), false).unwrap_err();
 
     assert!(matches!(err, PfadError::AlreadyExists(_)));
     assert!(dest.path().join("a.txt").exists());
@@ -131,7 +131,7 @@ fn paste_dir_into_its_own_subdir_is_an_error() {
     fs::create_dir_all(&inner).unwrap();
 
     copy_files(vec![&sub], false).unwrap();
-    let err = paste_files(&inner).unwrap_err();
+    let err = paste_files(&inner, false).unwrap_err();
 
     assert!(matches!(err, PfadError::PasteIntoSelf(_)));
     assert!(!inner.join("sub").exists());
@@ -149,7 +149,7 @@ fn paste_after_clear_does_not_reuse_old_selection() {
     copy_files(Vec::<PathBuf>::new(), false).unwrap();
 
     assert!(matches!(
-        paste_files(dest.path()),
+        paste_files(dest.path(), false),
         Err(PfadError::NothingToPaste)
     ));
     assert_eq!(fs::read_dir(dest.path()).unwrap().count(), 0);
@@ -161,7 +161,7 @@ fn paste_without_any_copy_is_nothing_to_paste() {
     let dest = tempdir().unwrap();
 
     assert!(matches!(
-        paste_files(dest.path()),
+        paste_files(dest.path(), false),
         Err(PfadError::NothingToPaste)
     ));
 }
@@ -176,8 +176,8 @@ fn paste_keeps_the_selection_for_a_second_paste() {
     fs::write(&file, "x").unwrap();
 
     copy_files(vec![&file], false).unwrap();
-    paste_files(first.path()).unwrap();
-    paste_files(second.path()).unwrap();
+    paste_files(first.path(), false).unwrap();
+    paste_files(second.path(), false).unwrap();
 
     assert!(first.path().join("a.txt").exists());
     assert!(second.path().join("a.txt").exists());
@@ -195,7 +195,7 @@ fn paste_of_a_deleted_source_is_not_found_and_copies_nothing() {
 
     copy_files(vec![&kept, &gone], false).unwrap();
     fs::remove_file(&gone).unwrap();
-    let err = paste_files(dest.path()).unwrap_err();
+    let err = paste_files(dest.path(), false).unwrap_err();
 
     assert_eq!(io_kind(err), ErrorKind::NotFound);
     assert_eq!(fs::read_dir(dest.path()).unwrap().count(), 0);
@@ -213,7 +213,7 @@ fn paste_uses_latest_copy() {
 
     copy_files(vec![&a], false).unwrap();
     copy_files(vec![&b], false).unwrap();
-    paste_files(dest.path()).unwrap();
+    paste_files(dest.path(), false).unwrap();
 
     assert!(!dest.path().join("a.txt").exists());
     assert!(dest.path().join("b.txt").exists());
@@ -228,7 +228,7 @@ fn paste_into_missing_destination_is_an_io_error() {
     fs::write(&file, "x").unwrap();
 
     copy_files(vec![&file], false).unwrap();
-    let err = paste_files(dest.path().join("nope")).unwrap_err();
+    let err = paste_files(dest.path().join("nope"), false).unwrap_err();
 
     assert!(matches!(err, PfadError::Io(_)));
 }
@@ -243,7 +243,7 @@ fn paste_path_with_spaces_and_unicode() {
     fs::write(&file, "x").unwrap();
 
     copy_files(vec![&file], false).unwrap();
-    paste_files(dest.path()).unwrap();
+    paste_files(dest.path(), false).unwrap();
 
     assert!(dest.path().join(name).exists());
 }

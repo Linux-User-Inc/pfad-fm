@@ -63,6 +63,9 @@ pub enum Commands {
     /// Pastes the copied items into a directory
     Paste {
         dir_path: String,
+        /// Paste the files on the system clipboard instead of the copied selection
+        #[arg(short, long)]
+        clipboard: bool,
     },
     Tui,
 }
