@@ -51,11 +51,16 @@ pub enum Commands {
     List {
         dir_path: String,
     },
-    /// Copies absolute path of a file/directory
+    /// Saves files/directories as the selection for `paste`, optionally also on the system clipboard
     Copy {
-        path: String, // I made this path instead of dir_path, because copy takes a file or a directory, so not always a "directory path" 
+        // "paths" instead of "dir_paths", because copy takes files or directories
+        #[arg(required = true, num_args = 1..)]
+        paths: Vec<String>,
+        /// Also put the items on the system clipboard
+        #[arg(short, long)]
+        clipboard: bool,
     },
-    /// Pastes copied items
+    /// Pastes the copied items into a directory
     Paste {
         dir_path: String,
     },

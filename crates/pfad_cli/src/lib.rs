@@ -38,8 +38,8 @@ pub fn run(args: Args) -> Result<()> {
                 println!("{}", entry);
             }
         }
-        Commands::Copy { path } => {
-            pfad_core::copy_files(vec![path], false)?;
+        Commands::Copy { paths, clipboard } => {
+            pfad_core::copy_files(paths, clipboard)?;
         }
         Commands::Paste { dir_path } => {
             pfad_core::paste_files(dir_path)?;
