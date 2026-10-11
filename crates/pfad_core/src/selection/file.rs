@@ -5,7 +5,8 @@ use std::path::{Path, PathBuf};
 
 const FILE_NAME: &str = "selection";
 
-/// PFAD_STATE_DIR overrides the default location, used by tests/CI.
+/// The directory the selection file lives in: `$PFAD_STATE_DIR` if set (used by
+/// tests/CI), otherwise `pfad/` inside the OS local data directory.
 pub(crate) fn default_dir() -> Result<PathBuf> {
     if let Some(dir) = std::env::var_os("PFAD_STATE_DIR") {
         return Ok(PathBuf::from(dir));
@@ -15,7 +16,12 @@ pub(crate) fn default_dir() -> Result<PathBuf> {
         .ok_or_else(|| PfadError::Selection("no local data directory".into()))
 }
 
-/// Replaces the saved selection, an empty slice clears it.
+/// Replaces the saved selection in `dir`; an empty slice clears it.
+///
+/// The directory is created if missing. The file is written to a temporary name
+/// and renamed into place, so readers never see a half-written selection. Paths
+/// that are not valid UTF-8 are rejected with [`PfadError::NonUtf8Path`] and the
+/// previous selection is kept.
 pub(crate) fn save(dir: &Path, paths: &[PathBuf]) -> Result<()> {
     let mut data = String::new();
     for p in paths {
@@ -32,7 +38,10 @@ pub(crate) fn save(dir: &Path, paths: &[PathBuf]) -> Result<()> {
     Ok(())
 }
 
-/// Missing file = empty selection, emptiness is turned into an error by the caller.
+/// Reads the saved selection from `dir`.
+///
+/// A missing file counts as an empty selection; turning that into an error is
+/// up to the caller.
 pub(crate) fn load(dir: &Path) -> Result<Vec<PathBuf>> {
     let data = match fs::read_to_string(dir.join(FILE_NAME)) {
         Ok(d) => d,

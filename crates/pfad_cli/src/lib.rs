@@ -4,6 +4,10 @@ pub mod cli_args;
 use cli_args::{Args, Commands};
 use pfad_core::*;
 
+/// Runs one CLI command by calling the matching `pfad_core` function.
+///
+/// `List` prints its entries to stdout. `Tui` is handled by the `pfad` binary
+/// and returns [`PfadError::Cli`] here.
 pub fn run(args: Args) -> Result<()> {
 
     match args.command {
@@ -35,7 +39,7 @@ pub fn run(args: Args) -> Result<()> {
             }
         }
         Commands::Copy { path } => {
-            pfad_core::copy_files(vec![path])?;
+            pfad_core::copy_files(vec![path], false)?;
         }
         Commands::Paste { dir_path } => {
             pfad_core::paste_files(dir_path)?;

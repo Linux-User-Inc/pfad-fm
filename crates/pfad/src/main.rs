@@ -3,6 +3,8 @@ use clap::Parser;
 use::pfad_cli::cli_args::{Args, Commands};
 use std::process::ExitCode;
 
+/// Parses the arguments and runs the TUI or a CLI command. Errors go to stderr
+/// and give a failing exit code.
 fn main() -> ExitCode {
 
     let args = Args::parse();

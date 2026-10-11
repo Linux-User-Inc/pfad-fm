@@ -3,7 +3,11 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-
+/// Copies `src` (file or directory) into `dest_dir`, keeping its name. Returns
+/// the new path, or `None` if `src` has no file name to copy.
+///
+/// Fails with [`PfadError::AlreadyExists`] rather than overwrite, and with
+/// [`PfadError::PasteIntoSelf`] if a directory would be copied into itself.
 pub(crate) fn copy_into(src: &Path, dest_dir: &Path) -> Result<Option<PathBuf>> {
     let Some(name) = src.file_name() else { return Ok(None) };
     let dest = dest_dir.join(name);
@@ -24,6 +28,10 @@ pub(crate) fn copy_into(src: &Path, dest_dir: &Path) -> Result<Option<PathBuf>> 
     Ok(Some(dest))
 }
 
+/// Recursively copies the directory `src` to the new directory `dest`.
+///
+/// `dest` must not exist yet. On failure, whatever was already copied is left
+/// in place.
 pub(crate) fn copy_dir_all(src: &Path, dest: &Path) -> io::Result<()> {
     fs::create_dir(dest)?;
 
