@@ -1,3 +1,5 @@
+mod file;
+
 use clipboard_rs::{Clipboard, ClipboardContext};
 use crate::error::{PfadError, Result};
 use crate::transfer;
