@@ -1,3 +1,4 @@
+mod clipboard;
 mod file;
 
 use clipboard_rs::{Clipboard, ClipboardContext};

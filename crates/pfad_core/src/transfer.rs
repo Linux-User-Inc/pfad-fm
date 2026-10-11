@@ -3,8 +3,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-/// Copies `src` (file or directory) into `dest_dir`, keeping its name.
-/// Returns the new path, or `None` if `src` has no file name to copy.
+
 pub(crate) fn copy_into(src: &Path, dest_dir: &Path) -> Result<Option<PathBuf>> {
     let Some(name) = src.file_name() else { return Ok(None) };
     let dest = dest_dir.join(name);
