@@ -41,3 +41,108 @@ pub(crate) fn load(dir: &Path) -> Result<Vec<PathBuf>> {
     };
     Ok(data.split('\0').filter(|s| !s.is_empty()).map(PathBuf::from).collect())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    fn paths(names: &[&str]) -> Vec<PathBuf> {
+        names.iter().map(PathBuf::from).collect()
+    }
+
+    #[test]
+    fn round_trip() {
+        let dir = tempdir().unwrap();
+        let sel = paths(&["/a/one.txt", "/b/two"]);
+
+        save(dir.path(), &sel).unwrap();
+
+        assert_eq!(load(dir.path()).unwrap(), sel);
+    }
+
+    #[test]
+    fn save_replaces_previous_selection() {
+        let dir = tempdir().unwrap();
+
+        save(dir.path(), &paths(&["/old"])).unwrap();
+        save(dir.path(), &paths(&["/new"])).unwrap();
+
+        assert_eq!(load(dir.path()).unwrap(), paths(&["/new"]));
+    }
+
+    #[test]
+    fn saving_empty_slice_clears_selection() {
+        let dir = tempdir().unwrap();
+
+        save(dir.path(), &paths(&["/a"])).unwrap();
+        save(dir.path(), &[]).unwrap();
+
+        assert!(load(dir.path()).unwrap().is_empty());
+    }
+
+    #[test]
+    fn load_without_a_file_is_empty() {
+        let dir = tempdir().unwrap();
+
+        assert!(load(dir.path()).unwrap().is_empty());
+    }
+
+    #[test]
+    fn spaces_unicode_and_newlines_survive() {
+        let dir = tempdir().unwrap();
+        let sel = paths(&["/a b/my file – ünïcödé 文件.txt", "/line\nbreak"]);
+
+        save(dir.path(), &sel).unwrap();
+
+        assert_eq!(load(dir.path()).unwrap(), sel);
+    }
+
+    #[test]
+    fn save_creates_missing_directory() {
+        let dir = tempdir().unwrap();
+        let nested = dir.path().join("not").join("there").join("yet");
+
+        save(&nested, &paths(&["/a"])).unwrap();
+
+        assert_eq!(load(&nested).unwrap(), paths(&["/a"]));
+    }
+
+    #[test]
+    fn save_leaves_no_temp_file_behind() {
+        let dir = tempdir().unwrap();
+
+        save(dir.path(), &paths(&["/a"])).unwrap();
+
+        let names: Vec<_> = fs::read_dir(dir.path())
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
+        assert_eq!(names, vec![std::ffi::OsString::from(FILE_NAME)]);
+    }
+
+    #[cfg(unix)]
+    fn non_utf8_path() -> PathBuf {
+        use std::ffi::OsStr;
+        use std::os::unix::ffi::OsStrExt;
+        PathBuf::from(OsStr::from_bytes(b"/bad\xff\xfename"))
+    }
+
+    #[cfg(windows)]
+    fn non_utf8_path() -> PathBuf {
+        use std::ffi::OsString;
+        use std::os::windows::ffi::OsStringExt;
+        PathBuf::from(OsString::from_wide(&[0x62, 0x61, 0x64, 0xD800]))
+    }
+
+    #[test]
+    fn non_utf8_path_is_rejected_and_old_selection_kept() {
+        let dir = tempdir().unwrap();
+        save(dir.path(), &paths(&["/keep"])).unwrap();
+
+        let err = save(dir.path(), &[PathBuf::from("/ok"), non_utf8_path()]).unwrap_err();
+
+        assert!(matches!(err, PfadError::NonUtf8Path(_)));
+        assert_eq!(load(dir.path()).unwrap(), paths(&["/keep"]));
+    }
+}
