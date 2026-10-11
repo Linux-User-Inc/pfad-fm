@@ -9,6 +9,9 @@ pub enum PfadError {
     InvalidName(String),
     Clipboard(String),
     PasteIntoSelf(PathBuf),
+    Selection(String),
+    NonUtf8Path(PathBuf),
+    NothingToPaste,
 }
 
 impl fmt::Display for PfadError {
@@ -20,6 +23,9 @@ impl fmt::Display for PfadError {
             PfadError::Cli(n) => write!(f, "CLI error: {n}"),
             PfadError::Clipboard(n) => write!(f, "clipboard error: {n}"),
             PfadError::PasteIntoSelf(p) => write!(f, "cannot paste a folder into itself: {}", p.display()),
+            PfadError::Selection(n) => write!(f, "selection error: {n}"),
+            PfadError::NonUtf8Path(p) => write!(f, "path is not valid UTF-8: {}", p.display()),
+            PfadError::NothingToPaste => write!(f, "nothing to paste: copy something first"),
         }
     }
 }
